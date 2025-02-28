@@ -12,17 +12,15 @@ const auth = async (req, res, next) => {
   try {
     const token = req.header('Authorization').replace('Bearer ', '');
     const decoded = jwt.verify(token, process.env.JWT_SECRET); 
-    console.error('Token verification error:', error); // Log the error for debugging
-
     req.user = decoded;
     next();
   } catch (error) {
+    console.error('Token verification error:', error); // Log the error for debugging
     res.status(401).json({ error: 'Authentication required' });
   }
 };
 
 module.exports = auth;
-
 
 // Register
 router.post('/register', async (req, res) => {
@@ -121,6 +119,38 @@ router.post('/login', async (req, res) => {
   } catch (error) {
     console.error('Login error:', error); // Log the error details
     res.status(500).json({ error: 'Error logging in', details: error.message });
+  }
+});
+
+// Update Profile
+router.put('/profile', auth, async (req, res) => {
+  try {
+    const { username, bio, skills } = req.body;
+    const userId = req.user.userId;
+
+    // Find user by ID and update profile
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { username, bio, skills },
+      { new: true, runValidators: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        bio: user.bio,
+        skills: user.skills
+      }
+    });
+  } catch (error) {
+    console.error('Profile update error:', error); // Log the error details
+    res.status(500).json({ error: 'Error updating profile', details: error.message });
   }
 });
 
