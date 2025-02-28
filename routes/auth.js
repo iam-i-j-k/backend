@@ -155,7 +155,7 @@ router.put('/profile', auth, async (req, res) => {
 });
 
 // Fetch Users
-router.get('/users', auth, async (req, res) => {
+router.get('/users', async (req, res) => {
   try {
     const loggedInUserEmail = req.user.email; // Get logged-in user email from authentication middleware
 
