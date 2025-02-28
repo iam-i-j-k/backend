@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const Connection = require('../models/Connection'); // Assuming you have a Connection model
 
 const auth = async (req, res, next) => {
   if (!req.header('Authorization')) {
@@ -162,6 +163,40 @@ router.get('/users', auth, async (req, res) => {
   } catch (error) {
     console.error('Fetch users error:', error); // Log the error details
     res.status(500).json({ error: 'Error fetching users', details: error.message });
+  }
+});
+
+// Handle connection requests
+router.post('/connections', auth, async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const loggedInUserId = req.user.userId;
+
+    // Check if the connection already exists
+    const existingConnection = await Connection.findOne({
+      $or: [
+        { requester: loggedInUserId, recipient: userId },
+        { requester: userId, recipient: loggedInUserId }
+      ]
+    });
+
+    if (existingConnection) {
+      return res.status(400).json({ error: 'Connection already exists' });
+    }
+
+    // Create a new connection
+    const connection = new Connection({
+      requester: loggedInUserId,
+      recipient: userId,
+      status: 'pending' // or 'connected' based on your logic
+    });
+
+    await connection.save();
+
+    res.status(201).json({ message: 'Connection request sent', connection });
+  } catch (error) {
+    console.error('Connection error:', error); // Log the error details
+    res.status(500).json({ error: 'Error creating connection', details: error.message });
   }
 });
 
