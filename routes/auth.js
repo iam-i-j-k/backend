@@ -1,4 +1,8 @@
 const jwt = require('jsonwebtoken');
+const express = require('express');
+const router = express.Router();
+const bcrypt = require('bcryptjs');
+const User = require('../models/User');
 
 const auth = async (req, res, next) => {
   if (!req.header('Authorization')) {
@@ -19,15 +23,11 @@ const auth = async (req, res, next) => {
 
 module.exports = auth;
 
-const express = require('express');
-const router = express.Router();
-const bcrypt = require('bcryptjs');
-const User = require('../models/User');
 
 // Register
 router.post('/register', async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, skills, bio } = req.body;
     
     // Check if user exists
     const existingUser = await User.findOne({ 
@@ -48,7 +48,9 @@ router.post('/register', async (req, res) => {
     const user = new User({
       username,
       email,
-      password: hashedPassword
+      password: hashedPassword,
+      skills,
+      bio
     });
 
     await user.save();
@@ -65,12 +67,20 @@ router.post('/register', async (req, res) => {
       user: {
         _id: user._id,
         username: user.username,
-        email: user.email
+        email: user.email,
+        skills: user.skills,
+        bio: user.bio
       }
     });
   } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ error: 'Error registering user' });
+    if (error.code === 11000) {
+      // Duplicate key error
+      const field = Object.keys(error.keyValue)[0];
+      const message = `The ${field} is already in use.`;
+      return res.status(400).json({ error: message });
+    }
+    console.error('Registration error:', error); // Log the error details
+    res.status(500).json({ error: 'Error registering user', details: error.message });
   }
 });
 
@@ -103,11 +113,14 @@ router.post('/login', async (req, res) => {
       user: {
         _id: user._id,
         username: user.username,
-        email: user.email
+        email: user.email,
+        skills: user.skills,
+        bio: user.bio
       }
     });
   } catch (error) {
-    res.status(500).json({ error: 'Error logging in' });
+    console.error('Login error:', error); // Log the error details
+    res.status(500).json({ error: 'Error logging in', details: error.message });
   }
 });
 
@@ -116,7 +129,8 @@ router.get('/users', async (req, res) => {
     const users = await User.find({}).select('-password'); // Excludes password field
     res.json(users);
   } catch (error) {
-    res.status(500).json({ error: 'Error fetching users' });
+    console.error('Fetch users error:', error); // Log the error details
+    res.status(500).json({ error: 'Error fetching users', details: error.message });
   }
 });
 

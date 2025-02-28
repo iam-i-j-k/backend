@@ -4,9 +4,7 @@ const { Server } = require('socket.io');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
-const Message = require('./models/Message');
 const authRoutes = require('./routes/auth');
-
 
 const app = express();
 const server = http.createServer(app);
@@ -111,6 +109,7 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 8000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`https://localhost:${PORT}`);
 });
 
 // Graceful shutdown
