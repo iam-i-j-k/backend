@@ -154,9 +154,10 @@ router.put('/profile', auth, async (req, res) => {
   }
 });
 
-router.get('/users', async (req, res) => {
+// Fetch Users
+router.get('/users', auth, async (req, res) => {
   try {
-    const loggedInUserEMail = req.user.email; // Get logged-in user ID from authentication middleware
+    const loggedInUserEmail = req.user.email; // Get logged-in user email from authentication middleware
 
     const users = await User.find({ email: { $ne: loggedInUserEmail } }) // Exclude the logged-in user
       .select('-password'); // Excludes password field
@@ -167,6 +168,5 @@ router.get('/users', async (req, res) => {
     res.status(500).json({ error: 'Error fetching users', details: error.message });
   }
 });
-
 
 module.exports = router;
