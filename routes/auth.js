@@ -156,9 +156,9 @@ router.put('/profile', auth, async (req, res) => {
 
 router.get('/users', async (req, res) => {
   try {
-    const loggedInUserId = req._id; // Get logged-in user ID from authentication middleware
+    const loggedInUserEMail = req.user.email; // Get logged-in user ID from authentication middleware
 
-    const users = await User.find({ _id: { $ne: loggedInUserId } }) // Exclude the logged-in user
+    const users = await User.find({ email: { $ne: loggedInUserEmail } }) // Exclude the logged-in user
       .select('-password'); // Excludes password field
 
     res.json(users);
