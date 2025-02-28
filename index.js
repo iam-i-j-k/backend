@@ -9,11 +9,13 @@ const app = express();
 const server = http.createServer(app);
 const cors = require("cors");
 
+const allowedOrigins = process.env.NODE_ENV === "production" 
+  ? [process.env.FRONTEND_URL, "https://skillswap2.vercel.app"]
+  : ["http://localhost:5173"];
+
 app.use(
   cors({
-    origin: process.env.NODE_ENV === "production" 
-      ? process.env.FRONTEND_URL 
-      : "http://localhost:5173",
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "DELETE"], // Allow required methods
     credentials: true, // Allow cookies & authentication headers
   })
@@ -34,14 +36,13 @@ mongoose.connect(process.env.MONGODB_URI)
 // Socket.IO Configuration
 const io = new Server(server, {
   cors: {
-    origin: process.env.NODE_ENV === 'production' 
-      ? process.env.FRONTEND_URL 
-      : "https://skillswap2.vercel.app",
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true
   }
 });
 app.options("*", cors()); // Handle preflight requests for all routes
+
 // Active users storage
 const users = new Map();
 
