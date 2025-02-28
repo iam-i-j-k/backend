@@ -41,7 +41,7 @@ const io = new Server(server, {
     credentials: true
   }
 });
-
+app.options("*", cors()); // Handle preflight requests for all routes
 // Active users storage
 const users = new Map();
 
