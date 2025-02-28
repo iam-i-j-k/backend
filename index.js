@@ -11,7 +11,7 @@ const cors = require("cors");
 
 const allowedOrigins = process.env.NODE_ENV === "production" 
   ? [process.env.FRONTEND_URL, "https://skillswap2.vercel.app"]
-  : ["http://localhost:5173"];
+  : ["https://localhost:5173"];
 
 app.use(
   cors({
