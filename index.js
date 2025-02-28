@@ -2,12 +2,23 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const mongoose = require('mongoose');
-const cors = require('cors');
 require('dotenv').config();
 const authRoutes = require('./routes/auth');
 
 const app = express();
 const server = http.createServer(app);
+const cors = require("cors");
+
+app.use(
+  cors({
+    origin: process.env.NODE_ENV === "production" 
+      ? process.env.FRONTEND_URL 
+      : "http://localhost:5173",
+    methods: ["GET", "POST", "PUT", "DELETE"], // Allow required methods
+    credentials: true, // Allow cookies & authentication headers
+  })
+);
+
 
 // Middleware
 app.use(cors());
@@ -15,16 +26,13 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-})
+mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('Connected to MongoDB'))
     .catch(err => {
         console.error('MongoDB connection error:', err);
         process.exit(1);
-    });
-
+      });
+      
 // Socket.IO Configuration
 const io = new Server(server, {
   cors: {
@@ -35,6 +43,7 @@ const io = new Server(server, {
     credentials: true
   }
 });
+
 
 // Active users storage
 const users = new Map();
