@@ -19,9 +19,7 @@ app.use(
   })
 );
 
-
 // Middleware
-app.use(cors());
 app.use(express.json());
 app.use('/api/auth', authRoutes);
 
@@ -43,7 +41,6 @@ const io = new Server(server, {
     credentials: true
   }
 });
-
 
 // Active users storage
 const users = new Map();
