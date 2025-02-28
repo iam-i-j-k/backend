@@ -172,6 +172,10 @@ router.post('/connections', auth, async (req, res) => {
     const { userId } = req.body;
     const loggedInUserId = req.user.userId;
 
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
     // Check if the connection already exists
     const existingConnection = await Connection.findOne({
       $or: [
