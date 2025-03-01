@@ -193,12 +193,6 @@ router.post('/connections', auth, async (req, res) => {
 
     await connection.save();
 
-    io.to(userId).emit('newConnectionRequest', {
-      requesterId: loggedInUserId,
-      recipientId: userId,
-      status: 'pending'
-    });
-
     res.status(201).json({ message: 'Connection request sent', connection });
   } catch (error) {
     console.error('Connection error:', error); // Log the error details

@@ -18,29 +18,6 @@ const io = new Server(server, {
   }
 });
 
-const onlineUsers = new Map();
-
-io.on('connection', (socket) => {
-  console.log('🔵 A user connected:', socket.id);
-
-  socket.on('registerUser', (userId) => {
-    onlineUsers.set(userId, socket.id);
-    console.log(`🟢 User ${userId} registered with socket ID ${socket.id}`);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('🔴 A user disconnected:', socket.id);
-    for (let [userId, id] of onlineUsers) {
-      if (id === socket.id) {
-        onlineUsers.delete(userId);
-        break;
-      }
-    }
-  });
-});
-
-
-
 app.use(
   cors({
     origin: process.env.NODE_ENV === "production" 
