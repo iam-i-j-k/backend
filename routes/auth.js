@@ -3,7 +3,8 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
-const Connection = require('../models/Connection'); // Assuming you have a Connection model
+const Connection = require('../models/Connection');
+const { io } = require('../index'); // Import io instance
 
 const auth = async (req, res, next) => {
   if (!req.header('Authorization')) {
@@ -192,6 +193,8 @@ router.post('/connections', auth, async (req, res) => {
     });
 
     await connection.save();
+
+    io.emit('connectionRequest', { requester: loggedInUserId, recipient: userId });
 
     res.status(201).json({ message: 'Connection request sent', connection });
   } catch (error) {

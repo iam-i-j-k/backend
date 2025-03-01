@@ -3,20 +3,28 @@ const http = require('http');
 const mongoose = require('mongoose');
 require('dotenv').config();
 const authRoutes = require('./routes/auth');
+const cors = require("cors");
+const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
-const cors = require("cors");
-
-const allowedOrigins = process.env.NODE_ENV === "production" 
-  ? [process.env.FRONTEND_URL, "https://skillswap2.vercel.app"]
-  : ["https://localhost:5173"];
+const io = new Server(server, {
+  cors: {
+    origin: process.env.NODE_ENV === "production" 
+      ? [process.env.FRONTEND_URL, "https://skillswap2.vercel.app"]
+      : ["https://localhost:5173"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  }
+});
 
 app.use(
   cors({
-    origin: allowedOrigins,
-    methods: ["GET", "POST", "PUT", "DELETE"], // Allow required methods
-    credentials: true, // Allow cookies & authentication headers
+    origin: process.env.NODE_ENV === "production" 
+      ? [process.env.FRONTEND_URL, "https://skillswap2.vercel.app"]
+      : ["https://localhost:5173"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
   })
 );
 
@@ -38,6 +46,14 @@ app.use((err, req, res, next) => {
   res.status(500).send('Something broke!');
 });
 
+// Socket.io connection
+io.on('connection', (socket) => {
+  console.log('a user connected');
+  socket.on('disconnect', () => {
+    console.log('user disconnected');
+  });
+});
+
 // Start server
 const PORT = process.env.PORT || 8000;
 server.listen(PORT, () => {
@@ -52,3 +68,5 @@ process.on('SIGTERM', () => {
     console.log('Server shutdown complete');
   });
 });
+
+module.exports = { io };
