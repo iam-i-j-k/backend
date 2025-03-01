@@ -195,7 +195,6 @@ router.post('/connections', auth, async (req, res) => {
 
     res.status(201).json({ message: 'Connection request sent', connection });
   } catch (error) {
-    console.error('Connection error:', error); // Log the error details
     res.status(500).json({ error: 'Error creating connection', details: error.message });
   }
 });
