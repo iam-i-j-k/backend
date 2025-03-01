@@ -4,6 +4,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Connection = require('../models/Connection'); // Assuming you have a Connection model
+const { io } = require('../index'); // Import the io instance
 
 const auth = async (req, res, next) => {
   if (!req.header('Authorization')) {
@@ -193,9 +194,58 @@ router.post('/connections', auth, async (req, res) => {
 
     await connection.save();
 
+    // Emit a Socket.io event to notify the recipient
+    io.to(userId).emit('connectionRequest', {
+      requester: loggedInUserId,
+      connection
+    });
+
     res.status(201).json({ message: 'Connection request sent', connection });
   } catch (error) {
     res.status(500).json({ error: 'Error creating connection', details: error.message });
+  }
+});
+
+router.put('/connections/:id/accept', auth, async (req, res) => {
+  try {
+    const connectionId = req.params.id;
+    const connection = await Connection.findById(connectionId);
+
+    if (!connection) {
+      return res.status(404).json({ error: 'Connection not found' });
+    }
+
+    if (connection.recipient.toString() !== req.user.userId) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    connection.status = 'connected';
+    await connection.save();
+
+    res.json({ message: 'Connection accepted', connection });
+  } catch (error) {
+    res.status(500).json({ error: 'Error accepting connection', details: error.message });
+  }
+});
+
+router.put('/connections/:id/reject', auth, async (req, res) => {
+  try {
+    const connectionId = req.params.id;
+    const connection = await Connection.findById(connectionId);
+
+    if (!connection) {
+      return res.status(404).json({ error: 'Connection not found' });
+    }
+
+    if (connection.recipient.toString() !== req.user.userId) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    await connection.remove();
+
+    res.json({ message: 'Connection rejected' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error rejecting connection', details: error.message });
   }
 });
 
