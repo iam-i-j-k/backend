@@ -209,9 +209,15 @@ router.post('/connections', auth, async (req, res) => {
 router.get('/connections', auth, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const connections = await Connection.find({ recipient: userId, status: 'pending' })
-      .populate('requester', 'username skills'); // Populate requester details
+    const connections = await Connection.find(
+      { recipient: userId, status: 'pending' },
+      'requester status createdAt' // Only these fields
+    ).populate('requester', 'username skills');
 
+    if (!connections.length) {
+      return res.status(404).json({ message: 'No pending connections found.' });
+    }
+    
     res.json(connections);
   } catch (error) {
     console.error('Fetch connections error:', error);
