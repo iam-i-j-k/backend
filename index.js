@@ -1,46 +1,22 @@
 const express = require('express');
 const http = require('http');
-const { Server } = require('socket.io');
-
 const mongoose = require('mongoose');
 require('dotenv').config();
 const authRoutes = require('./routes/auth');
-const cors = require("cors");
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: process.env.NODE_ENV === "production" 
-      ? [process.env.FRONTEND_URL, "https://skillswap2.vercel.app"]
-      : ["https://localhost:5173"],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-  }
-});
+const cors = require("cors");
 
-io.on('connection', (socket) => {
-  console.log('A user connected');
-
-  socket.on('connection_request', (data) => {
-    // Handle connection request logic here
-    console.log('Connection request received:', data);
-    // Emit an event back to the user or to other users
-    socket.emit('connection_response', { message: 'Request received' });
-  });
-
-  socket.on('disconnect', () => {
-    console.log('User disconnected');
-  });
-});
+const allowedOrigins = process.env.NODE_ENV === "production" 
+  ? [process.env.FRONTEND_URL, "https://skillswap2.vercel.app"]
+  : ["https://localhost:5173"];
 
 app.use(
   cors({
-    origin: process.env.NODE_ENV === "production" 
-      ? [process.env.FRONTEND_URL, "https://skillswap2.vercel.app"]
-      : ["https://localhost:5173"],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "DELETE"], // Allow required methods
+    credentials: true, // Allow cookies & authentication headers
   })
 );
 
@@ -76,5 +52,3 @@ process.on('SIGTERM', () => {
     console.log('Server shutdown complete');
   });
 });
-
-module.exports = { io };
