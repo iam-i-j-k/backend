@@ -206,4 +206,17 @@ router.post('/connections', auth, async (req, res) => {
   }
 });
 
+router.get('/connections', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const connections = await Connection.find({ recipient: userId, status: 'pending' })
+      .populate('requester', 'username skills'); // Populate requester details
+
+    res.json(connections);
+  } catch (error) {
+    console.error('Fetch connections error:', error);
+    res.status(500).json({ error: 'Error fetching connections', details: error.message });
+  }
+});
+
 module.exports = router;
