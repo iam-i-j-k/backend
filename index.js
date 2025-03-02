@@ -1,10 +1,11 @@
 const express = require('express');
 const http = require('http');
+const { Server } = require('socket.io');
+
 const mongoose = require('mongoose');
 require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const cors = require("cors");
-const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
@@ -16,6 +17,21 @@ const io = new Server(server, {
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   }
+});
+
+io.on('connection', (socket) => {
+  console.log('A user connected');
+
+  socket.on('connection_request', (data) => {
+    // Handle connection request logic here
+    console.log('Connection request received:', data);
+    // Emit an event back to the user or to other users
+    socket.emit('connection_response', { message: 'Request received' });
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected');
+  });
 });
 
 app.use(
@@ -44,14 +60,6 @@ mongoose.connect(process.env.MONGODB_URI)
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send('Something broke!');
-});
-
-// Socket.io connection
-io.on('connection', (socket) => {
-  console.log('a user connected');
-  socket.on('disconnect', () => {
-    console.log('user disconnected');
-  });
 });
 
 // Start server
