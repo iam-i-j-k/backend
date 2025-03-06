@@ -3,10 +3,19 @@ const http = require('http');
 const mongoose = require('mongoose');
 require('dotenv').config();
 const authRoutes = require('./routes/auth');
+const socketIO = require('socket.io')
+
 
 const app = express();
 const server = http.createServer(app);
 const cors = require("cors");
+
+const io = socketIO(server,{
+  cors:{
+    origin: '*',
+    method: ['GET', 'POST'],
+  }
+})
 
 const allowedOrigins = process.env.NODE_ENV === "production" 
   ? [process.env.FRONTEND_URL, "https://skillswap2.vercel.app"]
@@ -37,6 +46,26 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send('Something broke!');
 });
+
+app.post('/send',(req,res)=>{
+  const message = req.body.message;
+  console.log(message);
+
+  io.emit('pushNotification', {
+    message
+  })
+  res.status(200).send({
+    message:'Sent Successfully'
+  })
+
+  io.on('connect', (socket) => {
+    console.log('Connected');
+    socket.on('disconnect', () => {
+      console.log('Disconnected');
+    });
+  })
+  
+})
 
 // Start server
 const PORT = process.env.PORT || 8000;
