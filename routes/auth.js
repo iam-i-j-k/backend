@@ -194,12 +194,6 @@ router.post('/connections', auth, async (req, res) => {
 
     await connection.save();
 
-    // Emit a Socket.io event to notify the recipient
-    // io.to(userId).emit('connectionRequest', {
-    //   requester: loggedInUserId,
-    //   connection
-    // });
-
     res.status(201).json({ message: 'Connection request sent', connection });
   } catch (error) {
     console.error('Error creating connection:', error); // Log the error details
