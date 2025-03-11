@@ -4,7 +4,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Connection = require('../models/Connection'); // Assuming you have a Connection model
-const { io } = require('../index'); // Import the io instance
+// const { io } = require('../index'); // Import the io instance
 
 const auth = async (req, res, next) => {
   if (!req.header('Authorization')) {
@@ -195,33 +195,77 @@ router.post('/connections', auth, async (req, res) => {
     await connection.save();
 
     // Emit a Socket.io event to notify the recipient
-    io.to(userId).emit('connectionRequest', {
-      requester: loggedInUserId,
-      connection
-    });
+    // io.to(userId).emit('connectionRequest', {
+    //   requester: loggedInUserId,
+    //   connection
+    // });
 
     res.status(201).json({ message: 'Connection request sent', connection });
   } catch (error) {
+    console.error('Error creating connection:', error); // Log the error details
     res.status(500).json({ error: 'Error creating connection', details: error.message });
   }
 });
 
 router.get('/connections', auth, async (req, res) => {
   try {
-    const userId = req.user.userId;
-    const connections = await Connection.find(
-      { recipient: userId, status: 'pending' },
-      'requester status createdAt' // Only these fields
-    ).populate('requester', 'username skills');
+    const loggedInUserId = req.user.userId;
 
-    if (!connections.length) {
-      return res.status(404).json({ message: 'No pending connections found.' });
-    }
-    
+    const connections = await Connection.find({
+      recipient: loggedInUserId,
+      status: 'pending'
+    }).populate('requester', 'username email skills bio');
+
     res.json(connections);
   } catch (error) {
-    console.error('Fetch connections error:', error);
+    console.error('Fetch connections error:', error); // Log the error details
     res.status(500).json({ error: 'Error fetching connections', details: error.message });
+  }
+});
+
+// Accept connection request
+router.put('/connections/:id/accept', auth, async (req, res) => {
+  try {
+    const connectionId = req.params.id;
+    const loggedInUserId = req.user.userId;
+
+    const connection = await Connection.findOneAndUpdate(
+      { _id: connectionId, recipient: loggedInUserId, status: 'pending' },
+      { status: 'connected' },
+      { new: true }
+    );
+
+    if (!connection) {
+      return res.status(404).json({ error: 'Connection request not found' });
+    }
+
+    res.json({ message: 'Connection request accepted', connection });
+  } catch (error) {
+    console.error('Error accepting connection:', error);
+    res.status(500).json({ error: 'Error accepting connection', details: error.message });
+  }
+});
+
+// Reject connection request
+router.delete('/connections/:id', auth, async (req, res) => {
+  try {
+    const connectionId = req.params.id;
+    const loggedInUserId = req.user.userId;
+
+    const connection = await Connection.findOneAndDelete({
+      _id: connectionId,
+      recipient: loggedInUserId,
+      status: 'pending'
+    });
+
+    if (!connection) {
+      return res.status(404).json({ error: 'Connection request not found' });
+    }
+
+    res.json({ message: 'Connection request rejected' });
+  } catch (error) {
+    console.error('Error rejecting connection:', error);
+    res.status(500).json({ error: 'Error rejecting connection', details: error.message });
   }
 });
 
