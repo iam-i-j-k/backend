@@ -4,7 +4,6 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Connection = require('../models/Connection'); // Assuming you have a Connection model
-// const { io } = require('../index'); // Import the io instance
 
 const auth = async (req, res, next) => {
   if (!req.header('Authorization')) {
