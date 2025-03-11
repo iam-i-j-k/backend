@@ -3,22 +3,22 @@ const http = require('http');
 const mongoose = require('mongoose');
 require('dotenv').config();
 const authRoutes = require('./routes/auth');
-const socketIO = require('socket.io')
+// const socketIO = require('socket.io')
 
 
 const app = express();
 const server = http.createServer(app);
 const cors = require("cors");
 
-const io = socketIO(server,{
-  cors:{
-    origin: '*',
-    method: ['GET', 'POST'],
-  }
-})
+// const io = socketIO(server,{
+//   cors:{
+//     origin: '*',
+//     method: ['GET', 'POST'],
+//   }
+// })
 
 const allowedOrigins = process.env.NODE_ENV === "production" 
-  ? [process.env.FRONTEND_URL, "https://skillswap2.vercel.app"]
+  ? [process.env.FRONTEND_URL, "http://localhost:5173"]
   : ["https://localhost:5173"];
 
 app.use(
@@ -47,31 +47,31 @@ app.use((err, req, res, next) => {
   res.status(500).send('Something broke!');
 });
 
-app.post('/send',(req,res)=>{
-  const message = req.body.message;
-  console.log(message);
+// app.post('/send',(req,res)=>{
+//   const message = req.body.message;
+//   console.log(message);
 
-  io.emit('pushNotification', {
-    message
-  })
-  res.status(200).send({
-    message:'Sent Successfully'
-  })
+//   io.emit('pushNotification', {
+//     message
+//   })
+//   res.status(200).send({
+//     message:'Sent Successfully'
+//   })
 
-  io.on('connect', (socket) => {
-    console.log('Connected');
-    socket.on('disconnect', () => {
-      console.log('Disconnected');
-    });
-  })
+//   io.on('connect', (socket) => {
+//     console.log('Connected');
+//     socket.on('disconnect', () => {
+//       console.log('Disconnected');
+//     });
+//   })
   
-})
+// })
 
 // Start server
 const PORT = process.env.PORT || 8000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`https://localhost:${PORT}`);
+  console.log(`http://localhost:${PORT}`);
 });
 
 // Graceful shutdown
