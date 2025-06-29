@@ -46,13 +46,20 @@ connectRedis()
     }
   });
 
-// Initialize Socket.IO
+// Initialize Socket.IO with production configuration
 io.attach(server, {
   cors: {
     origin: config.corsOrigin,
     methods: ["GET", "POST"],
     credentials: true
-  }
+  },
+  transports: ['websocket', 'polling'],
+  allowEIO3: true,
+  pingTimeout: 60000,
+  pingInterval: 25000,
+  maxHttpBufferSize: 1e8,
+  httpCompression: true,
+  cookie: false
 });
 
 // MongoDB Connection
