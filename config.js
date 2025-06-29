@@ -7,10 +7,7 @@ const config = {
   jwtSecret: process.env.JWT_SECRET,
   frontendUrl: process.env.FRONTEND_URL,
   redis: {
-    username: process.env.REDIS_USERNAME || 'default',
-    password: process.env.REDIS_PASSWORD,
-    host: process.env.REDIS_HOST || 'redis-12960.c232.us-east-1-2.ec2.redns.redis-cloud.com',
-    port: parseInt(process.env.REDIS_PORT) || 12960
+    url: process.env.REDIS_URL || `redis://${process.env.REDIS_USERNAME}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:12960`
   },
   corsOrigin: process.env.NODE_ENV === "production" 
     ? [process.env.FRONTEND_URL, "https://skillswap2.vercel.app"]

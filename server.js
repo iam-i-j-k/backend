@@ -6,7 +6,6 @@ import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import connectionRoutes from './routes/connectionRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
-import { connectRedis } from './utils/redisClient.js';
 import config from './config.js';
 import io from './socket.js';
 import http from 'http';
@@ -19,7 +18,7 @@ const server = http.createServer(app);
 
 // Middlewares
 app.use(cors({
-  origin: config.corsOrigin,
+  origin: ['http://localhost:5173' || config.corsOrigin],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
@@ -38,17 +37,6 @@ app.use('/api/chat', chatRoutes);
 // Error Handler
 app.use(errorHandler);
 
-// Initialize Redis connection
-connectRedis()
-  .then(() => {
-    console.log('✅ Redis initialized successfully');
-  })
-  .catch((err) => {
-    console.error('❌ Redis initialization failed:', err);
-    if (config.environment === 'development') {
-      console.warn('Redis is not available. Chat features may be limited.');
-    }
-  });
 
 // Initialize Socket.IO with production configuration
 io.attach(server, {

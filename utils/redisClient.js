@@ -1,15 +1,9 @@
 import { createClient } from 'redis';
 import config from '../config.js';
 
-let connected = false;
-
-const redisClient = createClient({
-  username: config.redis.username,
-  password: config.redis.password,
-  socket: {
-    host: config.redis.host,
-    port: config.redis.port
-  },
+// Create separate clients for publishing and subscribing
+export const pubClient = createClient({
+  url: config.redis.url,
   retryStrategy: (times) => {
     const delay = Math.min(times * 50, 2000);
     return delay;
@@ -17,34 +11,80 @@ const redisClient = createClient({
   maxRetriesPerRequest: 5
 });
 
-// Logging
-redisClient.on('error', (err) => console.error('Redis Client Error:', err));
-redisClient.on('connect', () => console.log('Redis client connected'));
-redisClient.on('ready', () => console.log('Redis client ready'));
-redisClient.on('end', () => console.log('Redis client connection ended'));
-redisClient.on('reconnecting', () => console.log('Redis client reconnecting'));
+export const subClient = createClient({
+  url: config.redis.url,
+  retryStrategy: (times) => {
+    const delay = Math.min(times * 50, 2000);
+    return delay;
+  },
+  maxRetriesPerRequest: 5
+});
 
-// Lazy connect function
+// Connection state tracking
+let pubConnected = false;
+let subConnected = false;
+
+// Error handling
+const handleError = (client, label) => (err) => {
+  console.error(`${label} Redis Client Error:`, err);
+  console.error(`${label} Redis URL:`, config.redis.url);
+};
+
+// Connect clients with error handling
 export const connectRedis = async () => {
-  if (!connected) {
+  if (!pubConnected) {
     try {
-      await redisClient.connect();
-      connected = true;
-      console.log('✅ Redis client initialized successfully');
-
-      // Optional: test connection
-      const result = await redisClient.set('test_connection', 'success');
-      if (result) {
-        const val = await redisClient.get('test_connection');
-        console.log('Redis connection test:', val);
-      }
+      await pubClient.connect();
+      pubConnected = true;
+      console.log('✅ Pub Redis client connected');
     } catch (err) {
-      console.error('❌ Failed to initialize Redis client:', err);
-      if (config.environment === 'development') {
-        console.warn('Redis is not available. Chat features may be limited.');
-      }
+      console.error('❌ Pub Redis connection failed:', err);
+    }
+  }
+
+  if (!subConnected) {
+    try {
+      await subClient.connect();
+      subConnected = true;
+      console.log('✅ Sub Redis client connected');
+    } catch (err) {
+      console.error('❌ Sub Redis connection failed:', err);
     }
   }
 };
 
-export default redisClient;
+// Initialize clients with error handling
+pubClient.on('error', handleError(pubClient, 'Pub'));
+subClient.on('error', handleError(subClient, 'Sub'));
+
+pubClient.on('connect', () => console.log('Pub Redis client connected'));
+subClient.on('connect', () => console.log('Sub Redis client connected'));
+
+pubClient.on('ready', () => console.log('Pub Redis client ready'));
+subClient.on('ready', () => console.log('Sub Redis client ready'));
+
+pubClient.on('end', () => console.log('Pub Redis client connection ended'));
+subClient.on('end', () => console.log('Sub Redis client connection ended'));
+
+subClient.on('reconnecting', () => console.log('Sub Redis client reconnecting'));
+
+// Test connections
+connectRedis()
+  .then(() => {
+    console.log('✅ Redis clients initialized successfully');
+    // Optional: test connection
+    Promise.all([
+      pubClient.set('test_connection', 'success'),
+      subClient.subscribe('test_channel')
+    ]).then(() => {
+      console.log('✅ Redis clients tested successfully');
+    }).catch(err => {
+      console.error('❌ Redis test failed:', err);
+    });
+  })
+  .catch(err => {
+    console.error('❌ Failed to initialize Redis clients:', err);
+    if (config.environment === 'development') {
+      console.warn('Redis is not available. Chat features may be limited.');
+    }
+  });
