@@ -1,7 +1,6 @@
 import { Server } from 'socket.io';
 import config from './config.js';
 import Message from './models/Message.js';
-import ConnectionRequest from './models/ConnectionRequest.js';
 import redisClient from './utils/redisClient.js';
 import { connectRedis } from './utils/redisClient.js';
 
