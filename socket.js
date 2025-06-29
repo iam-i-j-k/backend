@@ -1,41 +1,30 @@
 import { Server } from 'socket.io';
-import { createClient } from 'redis';
 import config from './config.js';
 import Message from './models/Message.js';
+import ConnectionRequest from './models/ConnectionRequest.js';
+import redisClient from './utils/redisClient.js';
+import { connectRedis } from './utils/redisClient.js';
 
 const CHANNEL_PREFIX = 'chat';
 
-// Initialize Redis clients
-const pub = createClient({ url: config.redisUrl });
-const sub = createClient({ url: config.redisUrl });
-
-let pubConnected = false;
-let subConnected = false;
-
-// Connect both Redis clients once on file load
-if (!pubConnected) {
-  await pub.connect();
-  pubConnected = true;
-}
-if (!subConnected) {
-  await sub.connect();
-  subConnected = true;
-}
-
-// Initialize Socket.IO
+// Initialize Socket.IO with CORS configuration
 const io = new Server({
   cors: {
     origin: config.corsOrigin,
-    methods: ['GET', 'POST']
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
 // Redis Publisher
 export const publishMessage = async (userId, message) => {
   try {
-    await pub.pPublish(`${CHANNEL_PREFIX}:${userId}`, JSON.stringify(message));
+    await connectRedis();
+    await redisClient.publish(`${CHANNEL_PREFIX}:${userId}`, JSON.stringify(message));
   } catch (err) {
-    console.error('❌ Redis publish error:', err);
+    console.error('Redis publish error:', err);
+    // Fallback to direct socket emit if Redis fails
+    io.to(userId).emit('receiveMessage', message);
   }
 };
 
@@ -48,13 +37,13 @@ class RedisSubscriber {
   async subscribe(channel) {
     if (!this.channels.has(channel)) {
       this.channels.add(channel);
-      await sub.pSubscribe(channel, (messageStr, channel) => {
+      await redisClient.subscribe(channel, (messageStr, channel) => {
         try {
           const userId = channel.split(':')[1];
           const message = JSON.parse(messageStr);
           io.to(userId).emit('receiveMessage', message);
         } catch (err) {
-          console.error('❌ Redis subscription error:', err);
+          console.error('Redis subscription error:', err);
         }
       });
     }
@@ -62,7 +51,7 @@ class RedisSubscriber {
 
   async unsubscribe(channel) {
     if (this.channels.has(channel)) {
-      await sub.pUnsubscribe(channel);
+      await redisClient.unsubscribe(channel);
       this.channels.delete(channel);
     }
   }
@@ -72,8 +61,9 @@ const redisSubscriber = new RedisSubscriber();
 
 // Socket.IO Event Handlers
 io.on('connection', (socket) => {
-  console.log('⚡ User connected:', socket.id);
+  console.log('Client connected:', socket.id);
 
+  // Handle connection request events
   socket.on('join', (userId) => {
     socket.join(userId);
     socket.userId = userId;
@@ -155,10 +145,10 @@ io.on('connection', (socket) => {
       };
 
       // Publish to Redis for both users (sender and recipient)
-      await pub.publish(`${CHANNEL_PREFIX}:${recipient}`, JSON.stringify(messageData));
-      await pub.publish(`${CHANNEL_PREFIX}:${sender}`, JSON.stringify(messageData));
+      await publishMessage(recipient, messageData);
+      await publishMessage(sender, messageData);
     } catch (err) {
-      console.error('❌ Error saving/sending message:', err);
+      console.error('Error saving/sending message:', err);
     }
   });
 
@@ -182,21 +172,11 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log('⚡ User disconnected:', socket.id);
+    console.log('Client disconnected:', socket.id);
     if (socket.userId) {
       redisSubscriber.unsubscribe(`${CHANNEL_PREFIX}:${socket.userId}`);
     }
   });
-
-  socket.on("receiveMessage", (message) => {
-    setMessages((prev) => [...prev, message])
-    if (message.sender === chatUserId) {
-      socket.emit("markAsDelivered", {
-        userId: currentUser._id,
-        chatUserId: message.sender,
-      })
-    }
-  })
 });
 
 export default io;
