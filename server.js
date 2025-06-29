@@ -17,8 +17,19 @@ const app = express();
 const server = http.createServer(app);
 
 // Middlewares
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'https://skillswap2.vercel.app',
+  'http://localhost:5173'
+];
+
 app.use(cors({
-  origin: [ process.env.FRONTEND_URL || 'http://localhost:5173' || config.corsOrigin],
+  origin: function(origin, callback) {
+    // allow requests with no origin (like mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'), false);
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
@@ -43,7 +54,7 @@ app.use(errorHandler);
 // Initialize Socket.IO with production configuration
 io.attach(server, {
   cors: {
-    origin: config.corsOrigin,
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true
   },
