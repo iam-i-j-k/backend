@@ -3,7 +3,7 @@ import http from 'http';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import authRoutes from './routes/auth.js';
+import authRoutes from './routes/authRoutes.js'; // Adjust the path as necessary
 
 dotenv.config();
 
