@@ -13,7 +13,7 @@ const CHANNEL_PREFIX = 'chat';
 // Initialize Socket.IO with CORS configuration
 const io = new Server({
   cors: {
-    origin: config.corsOrigin,
+    origin: [process.env.FRONTEND_URL || config.corsOrigin],
     methods: ["GET", "POST"],
     credentials: true
   }
