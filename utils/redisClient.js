@@ -36,7 +36,6 @@ export const connectRedis = async () => {
     try {
       await pubClient.connect();
       pubConnected = true;
-      console.log('✅ Pub Redis client connected');
     } catch (err) {
       console.error('❌ Pub Redis connection failed:', err);
     }
@@ -46,7 +45,6 @@ export const connectRedis = async () => {
     try {
       await subClient.connect();
       subConnected = true;
-      console.log('✅ Sub Redis client connected');
     } catch (err) {
       console.error('❌ Sub Redis connection failed:', err);
     }
@@ -71,13 +69,11 @@ subClient.on('reconnecting', () => console.log('Sub Redis client reconnecting'))
 // Test connections
 connectRedis()
   .then(() => {
-    console.log('✅ Redis clients initialized successfully');
     // Optional: test connection
     Promise.all([
       pubClient.set('test_connection', 'success'),
       subClient.subscribe('test_channel')
     ]).then(() => {
-      console.log('✅ Redis clients tested successfully');
     }).catch(err => {
       console.error('❌ Redis test failed:', err);
     });

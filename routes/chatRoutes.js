@@ -35,7 +35,6 @@ const upload = multer({
 });
 
 router.post('/upload', auth, upload.single('file'), async (req, res) => {
-  console.log('I am working');
 
   try {
     if (!req.file) {

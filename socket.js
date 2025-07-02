@@ -59,21 +59,18 @@ const redisSubscriber = {
 
 // Socket.IO Event Handlers
 io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
 
   // Handle connection request events
   socket.on('join-connection-rooms', (userId) => {
     // Join both sender and receiver rooms
     socket.join(`sender-${userId}`);
     socket.join(`receiver-${userId}`);
-    console.log(`User ${userId} joined connection rooms`);
 
     // Subscribe to Redis channels
     redisSubscriber.subscribe(`${CHANNEL_PREFIX}:${userId}`);
   });
 
   socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
     if (socket.userId) {
       redisSubscriber.unsubscribe(`${CHANNEL_PREFIX}:${socket.userId}`);
     }
@@ -106,7 +103,6 @@ io.on('connection', (socket) => {
       io.to(`sender-${requesterId}`).emit('connection-request-sent', newRequest);
       io.to(`receiver-${recipientId}`).emit('new-connection-request', newRequest);
 
-      console.log('Connection request sent successfully');
     } catch (error) {
       console.error('Error sending connection request:', error);
       socket.emit('error', { message: 'Failed to send connection request' });
@@ -136,7 +132,6 @@ io.on('connection', (socket) => {
       publishMessage(recipient, message);
       publishMessage(sender, message);
 
-      console.log('Message sent successfully');
     } catch (err) {
       console.error('Error saving/sending message:', err);
       socket.emit('error', { message: 'Failed to send message' });
