@@ -7,9 +7,10 @@ import userRoutes from './routes/userRoutes.js';
 import connectionRoutes from './routes/connectionRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import config from './config.js';
-import io from './socket.js';
+import { Server } from 'socket.io';
 import http from 'http';
 import { errorHandler } from './middleware/errorHandler.js';
+import socketHandlers from './socket.js'; // We'll export handlers, not io instance
 
 dotenv.config();
 
@@ -49,7 +50,7 @@ app.use(errorHandler);
 
 
 // Initialize Socket.IO with production configuration
-io.attach(server, {
+const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
     methods: ["GET", "POST"],
@@ -63,6 +64,9 @@ io.attach(server, {
   httpCompression: true,
   cookie: false
 });
+
+// Pass io to socketHandlers to register all events
+socketHandlers(io);
 
 // MongoDB Connection
 mongoose.connect(config.mongoUri)
