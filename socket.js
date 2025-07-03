@@ -54,7 +54,6 @@ export default function(io) {
     // Handle connection request events
     socket.on('join-connection-rooms', (userId) => {
       socket.userId = userId;
-      console.log(`✅ User ${userId} joined rooms: sender-${userId}, receiver-${userId}`);
       // Join both sender and receiver rooms
       socket.join(`sender-${userId}`);
       socket.join(`receiver-${userId}`);
@@ -131,7 +130,6 @@ export default function(io) {
 
     // --- Delete Message ---
     socket.on('deleteMessage', async ({ messageId }) => {
-        console.log("Received deleteMessage for:", messageId)
       try {
         const deleted = await Message.findByIdAndDelete(messageId);
         if (deleted) {
@@ -145,7 +143,6 @@ export default function(io) {
     });
 
     socket.on('editMessage', async ({ messageId, userId, newText }) => {
-        console.log("Received editMessage for:", messageId, "newText:", newText)
       try {
         const message = await Message.findById(messageId);
         if (!message) {
@@ -210,10 +207,6 @@ export default function(io) {
       io.to(`receiver-${chatUserId}`).emit('messagesSeen', { updatedMessages });
     });
 
-    socket.on("test", (data) => {
-  console.log("Test event received:", data);
-  socket.emit("testResponse", { received: true, data });
-});
 
 
     // --- Clear Chat ---
