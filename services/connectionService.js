@@ -41,6 +41,10 @@ export const approveConnection = async (userId, connectionId) => {
   connection.status = 'accepted';
   await connection.save();
 
+  // Increment totalConnections for both users
+  await User.findByIdAndUpdate(connection.requester, { $inc: { totalConnections: 1 } });
+  await User.findByIdAndUpdate(connection.recipient, { $inc: { totalConnections: 1 } });
+
   return { message: 'Connection accepted', connection };
 };
 
@@ -65,6 +69,16 @@ export const removeConnection = async (userId, connectionId) => {
   }
 
   if (!connection) throw new Error('Connection not found');
+
+  // If the connection was accepted, decrement for both users
+  if (connection.status === 'accepted') {
+    await Promise.all([
+      User.findByIdAndUpdate(connection.requester, { $inc: { totalConnections: -1 }, $max: { totalConnections: 0 } }),
+      User.findByIdAndUpdate(connection.recipient, { $inc: { totalConnections: -1 }, $max: { totalConnections: 0 } }),
+    ]);
+  }
+
+
 
   await connection.deleteOne();
 
