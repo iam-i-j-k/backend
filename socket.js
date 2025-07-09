@@ -48,7 +48,12 @@ const redisSubscriber = {
   }
 };
 
+let ioInstance = null;
+export function setIO(io) { ioInstance = io; }
+export function getIO() { return ioInstance; }
+
 export default function(io) {
+  setIO(io);
   io.on('connection', (socket) => {
 
     // Handle connection request events

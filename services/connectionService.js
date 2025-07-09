@@ -8,7 +8,8 @@ export const createConnection = async (requesterId, recipientId) => {
     $or: [
       { requester: requesterId, recipient: recipientId },
       { requester: recipientId, recipient: requesterId }
-    ]
+    ],
+    status: { $in: ['pending', 'accepted'] }
   });
   if (existing) throw new Error('Connection already exists');
 
@@ -72,15 +73,26 @@ export const removeConnection = async (userId, connectionId) => {
 
   // If the connection was accepted, decrement for both users
   if (connection.status === 'accepted') {
+    // Decrement first
     await Promise.all([
-      User.findByIdAndUpdate(connection.requester, { $inc: { totalConnections: -1 }, $max: { totalConnections: 0 } }),
-      User.findByIdAndUpdate(connection.recipient, { $inc: { totalConnections: -1 }, $max: { totalConnections: 0 } }),
+      User.findByIdAndUpdate(connection.requester, { $inc: { totalConnections: -1 } }),
+      User.findByIdAndUpdate(connection.recipient, { $inc: { totalConnections: -1 } }),
+    ]);
+    // Then ensure not below zero
+    await Promise.all([
+      User.findByIdAndUpdate(connection.requester, { $max: { totalConnections: 0 } }),
+      User.findByIdAndUpdate(connection.recipient, { $max: { totalConnections: 0 } }),
     ]);
   }
 
 
 
-  await connection.deleteOne();
+  await Connection.deleteMany({
+    $or: [
+      { requester: requesterId, recipient: recipientId },
+      { requester: recipientId, recipient: requesterId }
+    ]
+  });
 
   return { message: 'Connection removed' };
 };

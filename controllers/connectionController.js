@@ -6,21 +6,20 @@ import {
   fetchMatches
 } from '../services/connectionService.js';
 import Connection from '../models/Connection.js'; // Import the Connection model
+import { getIO } from '../socket.js'; // You need to export a getIO() from your socket.js
 
 export const sendConnectionRequest = async (req, res, next) => {
   try {
-    const result = await createConnection(req.userId, req.body.userId);
+    const { userId: requesterId } = req;
+    const { userId: recipientId } = req.body;
+    const { connection } = await createConnection(requesterId, recipientId);
 
-    // Populate requester before emitting
-    const populatedConnection = await Connection.findById(result.connection._id)
-      .populate('requester', 'username email skills bio');
+    // Emit to both users
+    const io = getIO();
+    io.to(`sender-${requesterId}`).emit('connectionRequestSent', connection);
+    io.to(`receiver-${recipientId}`).emit('newConnectionRequest', connection);
 
-    const io = req.app.get('io');
-    if (io && populatedConnection) {
-      io.emit('connectionRequestSent', populatedConnection);
-    }
-
-    res.status(201).json(result);
+    res.status(201).json({ message: 'Connection request sent', connection });
   } catch (err) {
     next(err);
   }
@@ -38,18 +37,16 @@ export const getPendingConnections = async (req, res, next) => {
 
 export const acceptConnectionRequest = async (req, res, next) => {
   try {
-    const result = await approveConnection(req.userId, req.params.id);
+    const { userId } = req;
+    const { id: connectionId } = req.params;
+    const { connection } = await approveConnection(userId, connectionId);
 
-    // Emit event for accepted connection (populated)
-    const io = req.app.get('io');
-    if (io && result.connection) {
-      const populatedConnection = await Connection.findById(result.connection._id)
-        .populate('requester', 'username email skills bio')
-        .populate('recipient', 'username email skills bio');
-      io.emit('connectionAccepted', populatedConnection);
-    }
+    // Emit to both users
+    const io = getIO();
+    io.to(`sender-${connection.requester}`).emit('connectionAccepted', connection);
+    io.to(`receiver-${connection.recipient}`).emit('connectionAccepted', connection);
 
-    res.status(200).json(result);
+    res.json({ message: 'Connection accepted', connection });
   } catch (err) {
     next(err);
   }
@@ -57,15 +54,16 @@ export const acceptConnectionRequest = async (req, res, next) => {
 
 export const declineConnectionRequest = async (req, res, next) => {
   try {
-    const result = await removeConnection(req.userId, req.params.id);
+    const { userId } = req;
+    const { id: connectionId } = req.params;
+    const { connection } = await removeConnection(userId, connectionId);
 
-    // Emit event for declined/removed connection
-    const io = req.app.get('io');
-    if (io) {
-      io.emit('connectionDeclined', { connectionId: req.params.id, remover: req.userId });
-    }
+    // Emit to both users
+    const io = getIO();
+    io.to(`sender-${connection.requester}`).emit('connectionDeclined', { connectionId });
+    io.to(`receiver-${connection.recipient}`).emit('connectionDeclined', { connectionId });
 
-    res.status(200).json(result);
+    res.json({ message: 'Connection declined', connectionId });
   } catch (err) {
     next(err);
   }
@@ -75,6 +73,34 @@ export const getMatches = async (req, res, next) => {
   try {
     const matches = await fetchMatches(req.userId);
     res.status(200).json({ matches });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getConnectionStatus = async (req, res, next) => {
+  try {
+    const userId = req.userId; // logged-in user
+    const otherUserId = req.params.userId;
+
+    // Find any connection between the two users
+    const connection = await Connection.findOne({
+      $or: [
+        { requester: userId, recipient: otherUserId },
+        { requester: otherUserId, recipient: userId }
+      ]
+    });
+
+    let status = "none";
+    if (connection) {
+      if (connection.status === "accepted") {
+        status = "connected";
+      } else if (connection.status === "pending") {
+        status = "pending";
+      }
+    }
+
+    res.json({ status });
   } catch (err) {
     next(err);
   }
