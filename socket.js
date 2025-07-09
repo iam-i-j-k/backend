@@ -226,5 +226,20 @@ export default function(io) {
         socket.emit('error', { message: 'Failed to clear chat' });
       }
     });
+
+    // --- React to Message ---
+socket.on('reactMessage', async ({ messageId, userId, emoji }) => {
+  try {
+    const message = await Message.findById(messageId);
+    if (!message) return;
+    message.reactions = message.reactions || [];
+    message.reactions.push({ user: userId, emoji });
+    await message.save();
+    io.to(`sender-${message.sender}`).emit('messageReacted', { messageId, userId, emoji });
+    io.to(`receiver-${message.recipient}`).emit('messageReacted', { messageId, userId, emoji });
+  } catch (err) {
+    console.error('Error reacting to message:', err);
+  }
+});
   });
 }

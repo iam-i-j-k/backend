@@ -5,7 +5,7 @@ import { getAllUsers, getUserById, getUserStats } from '../controllers/userContr
 const router = express.Router();
 
 router.get('/', auth, getAllUsers);
-router.get('/:id', auth, getUserById);
 router.get('/stats', auth, getUserStats);
+router.get('/:id', auth, getUserById);
 
 export default router;
