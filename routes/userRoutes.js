@@ -4,8 +4,8 @@ import { getAllUsers, getUserById, getUserStats } from '../controllers/userContr
 
 const router = express.Router();
 
-router.get('/', auth, getAllUsers);
 router.get('/stats', auth, getUserStats);
+router.get('/', auth, getAllUsers);
 router.get('/:id', auth, getUserById);
 
 export default router;
