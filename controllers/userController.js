@@ -13,6 +13,10 @@ export const getAllUsers = async (req, res, next) => {
 };
 
 export const getUserById = async (req, res, next) => {
+  // Validate ObjectId
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ error: 'Invalid user ID' });
+  }
   try {
     const user = await User.findById(req.params.id).select('-password');
     if (!user) return res.status(404).json({ error: "User not found" });
