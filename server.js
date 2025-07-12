@@ -10,7 +10,7 @@ import config from './config.js';
 import { Server } from 'socket.io';
 import http from 'http';
 import { errorHandler } from './middleware/errorHandler.js';
-import socketHandlers from './socket.js'; // We'll export handlers, not io instance
+import sockets from './sockets/index.js'; // We'll export handlers, not io instance
 
 dotenv.config();
 
@@ -66,7 +66,7 @@ const io = new Server(server, {
 });
 
 // Pass io to socketHandlers to register all events
-socketHandlers(io);
+sockets(io);
 
 // MongoDB Connection
 mongoose.connect(config.mongoUri)
