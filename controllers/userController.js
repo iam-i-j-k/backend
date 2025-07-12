@@ -1,5 +1,4 @@
 import Message from '../models/Message.js';
-import Connection from '../models/Connection.js';
 import User from '../models/User.js';
 import { fetchAllUsers } from '../services/userService.js';
 
