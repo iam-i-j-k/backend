@@ -37,6 +37,7 @@ export const registerService = async ({ username, email, password, skills, bio }
       email: user.email,
       skills: user.skills,
       bio: user.bio,
+      verified: user.isVerified
     }
   };
 };
@@ -70,7 +71,7 @@ export const loginService = async ({ email, password }) => {
   const token = jwt.sign({ userId: user._id }, config.jwtSecret, { expiresIn: '24h' });
   return {
     token,
-    user: { _id: user._id, username: user.username, email: user.email, skills: user.skills, bio: user.bio, verified: user.verified }
+    user: { _id: user._id, username: user.username, email: user.email, skills: user.skills, bio: user.bio, verified: user.isVerified }
   };
 };
 
@@ -78,6 +79,6 @@ export const updateProfileService = async (userId, data) => {
   const user = await User.findByIdAndUpdate(userId, data, { new: true });
   if (!user) throw new Error('User not found');
   return {
-    user: { _id: user._id, username: user.username, email: user.email, bio: user.bio, skills: user.skills }
+    user: { _id: user._id, username: user.username, email: user.email, bio: user.bio, skills: user.skills, verified: user.isVerified }
   };
 };
