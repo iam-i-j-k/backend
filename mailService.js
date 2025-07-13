@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
 });
 
 export const sendVerificationEmail = async (to, token) => {
-  const verificationLink = `https://skillswap2.vercel.app/verify-email?token=${token}`;
+  const verificationLink = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
 
   await transporter.sendMail({
     from: `"SkillSwap" <${process.env.EMAIL_USER}>`,
@@ -23,5 +23,15 @@ export const sendVerificationEmail = async (to, token) => {
       <a href="${verificationLink}" target="_blank">Verify Email</a>
       <p>This link will expire in 1 hour.</p>
     `,
+  });
+};
+
+export const sendResetPasswordEmail = async (to, token) => {
+  const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+  await transporter.sendMail({
+    from: `"SkillSwap" <${process.env.EMAIL_USER}>`,
+    to,
+    subject: 'Reset your SkillSwap password',
+    html: `<p>Click <a href="${resetLink}">here</a> to reset your password. This link is valid for 1 hour.</p>`
   });
 };

@@ -1,4 +1,4 @@
-import { registerService, loginService, updateProfileService, verifyEmailService } from '../services/authService.js';
+import { registerService, loginService, updateProfileService, verifyEmailService, forgotPasswordService, resetPasswordService } from '../services/authService.js';
 
 export const register = async (req, res, next) => {
   try {
@@ -50,6 +50,34 @@ export const verifyEmail = async (req, res, next) => {
       return res.status(200).json({ message: 'Email already verified.' });
     } else {
       return res.status(400).json({ message: result.message || 'Invalid or expired token.' });
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const result = await forgotPasswordService(email);
+    if (result.success) {
+      res.status(200).json({ message: 'Password reset email sent.' });
+    } else {
+      res.status(400).json({ message: result.message });
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const resetPassword = async (req, res, next) => {
+  try {
+    const { token, password } = req.body;
+    const result = await resetPasswordService(token, password);
+    if (result.success) {
+      res.status(200).json({ message: 'Password reset successful.' });
+    } else {
+      res.status(400).json({ message: result.message });
     }
   } catch (err) {
     next(err);

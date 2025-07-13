@@ -20,13 +20,11 @@ const server = http.createServer(app);
 // Middlewares
 const allowedOrigins = [
   process.env.FRONTEND_URL,
-  'https://skillswap2.vercel.app',
   'http://localhost:5173'
 ];
 
 app.use(cors({
   origin: [
-    'https://skillswap2.vercel.app',
     'http://localhost:5173'
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],

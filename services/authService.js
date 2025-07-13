@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import config from '../config.js';
 import User from '../models/User.js';
-import { sendVerificationEmail } from '../mailService.js';
+import { sendResetPasswordEmail, sendVerificationEmail } from '../mailService.js';
 
 export const registerService = async ({ username, email, password, skills, bio }) => {
   const existingUser = await User.findOne({ email });
@@ -63,6 +63,7 @@ export const verifyEmailService = async (token) => {
 
 export const loginService = async ({ email, password }) => {
   const user = await User.findOne({ email });
+  console.log(await bcrypt.compare(password, user.password));
   if (!user || !(await bcrypt.compare(password, user.password))) {
     throw new Error('Invalid credentials');
   }
@@ -82,4 +83,25 @@ export const updateProfileService = async (userId, data) => {
   return {
     user: { _id: user._id, username: user.username, email: user.email, bio: user.bio, skills: user.skills, verified: user.isVerified }
   };
+};
+
+export const forgotPasswordService = async (email) => {
+  const user = await User.findOne({ email });
+  if (!user) return { success: false, message: 'No user with that email.' };
+  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  await sendResetPasswordEmail(email, token);
+  return { success: true };
+};
+
+export const resetPasswordService = async (token, newPassword) => {
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId);
+    if (!user) return { success: false, message: 'User not found' };
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+    return { success: true };
+  } catch (err) {
+    return { success: false, message: 'Invalid or expired token' };
+  }
 };
