@@ -64,7 +64,7 @@ export const loginService = async ({ email, password }) => {
   if (!user || !(await bcrypt.compare(password, user.password))) {
     throw new Error('Invalid credentials');
   }
-  if (!user.isverified) {
+  if (!user.isVerified) {
     throw new Error('Please verify your email before logging in.');
   }
   const token = jwt.sign({ userId: user._id }, config.jwtSecret, { expiresIn: '24h' });
