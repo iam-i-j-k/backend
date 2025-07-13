@@ -49,54 +49,6 @@ export const approveConnection = async (userId, connectionId) => {
   return { message: 'Connection accepted', connection };
 };
 
-export const removeConnection = async (userId, connectionId) => {
-  // Try to find a pending connection where the user is the recipient (decline request)
-  let connection = await Connection.findOne({
-    _id: connectionId,
-    status: 'pending',
-    recipient: userId
-  });
-
-  // If not found, try to find an accepted connection where the user is either party (remove connection)
-  if (!connection) {
-    connection = await Connection.findOne({
-      _id: connectionId,
-      status: 'accepted',
-      $or: [
-        { requester: userId },
-        { recipient: userId }
-      ]
-    });
-  }
-
-  if (!connection) throw new Error('Connection not found');
-
-  // If the connection was accepted, decrement for both users
-  if (connection.status === 'accepted') {
-    // Decrement first
-    await Promise.all([
-      User.findByIdAndUpdate(connection.requester, { $inc: { totalConnections: -1 } }),
-      User.findByIdAndUpdate(connection.recipient, { $inc: { totalConnections: -1 } }),
-    ]);
-    // Then ensure not below zero
-    await Promise.all([
-      User.findByIdAndUpdate(connection.requester, { $max: { totalConnections: 0 } }),
-      User.findByIdAndUpdate(connection.recipient, { $max: { totalConnections: 0 } }),
-    ]);
-  }
-
-
-
-  await Connection.deleteMany({
-    $or: [
-      { requester: requesterId, recipient: recipientId },
-      { requester: recipientId, recipient: requesterId }
-    ]
-  });
-
-  return { message: 'Connection removed' };
-};
-
 export const fetchMatches = async (userId) => {
   const connections = await Connection.find({
     $or: [{ requester: userId }, { recipient: userId }],

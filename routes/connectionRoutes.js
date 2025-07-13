@@ -6,7 +6,8 @@ import {
   acceptConnectionRequest,
   declineConnectionRequest,
   getMatches,
-  getConnectionStatus
+  getConnectionStatus,
+  removeConnection
 } from '../controllers/connectionController.js';
 
 const router = express.Router();
@@ -14,7 +15,8 @@ const router = express.Router();
 router.post('/', auth, sendConnectionRequest);
 router.get('/', auth, getPendingConnections);
 router.put('/:id/accept', auth, acceptConnectionRequest);
-router.put('/:id/decline', auth, declineConnectionRequest);
+router.put('/:id/decline', auth, declineConnectionRequest); // For pending requests
+router.delete('/:id', auth, removeConnection); // For accepted connections
 router.get('/matches', auth, getMatches);
 router.get('/status/:userId', auth, getConnectionStatus);
 

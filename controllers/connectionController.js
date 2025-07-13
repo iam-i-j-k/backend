@@ -2,11 +2,10 @@ import {
   createConnection,
   fetchPendingConnections,
   approveConnection,
-  removeConnection,
   fetchMatches
 } from '../services/connectionService.js';
 import Connection from '../models/Connection.js'; // Import the Connection model
-import { getIO } from '../socket.js'; // You need to export a getIO() from your socket.js
+import { getIO } from '../sockets/io.js';
 
 export const sendConnectionRequest = async (req, res, next) => {
   try {
@@ -56,9 +55,14 @@ export const declineConnectionRequest = async (req, res, next) => {
   try {
     const { userId } = req;
     const { id: connectionId } = req.params;
-    const { connection } = await removeConnection(userId, connectionId);
+    // Only decline if pending and recipient is current user
+    const connection = await Connection.findOneAndUpdate(
+      { _id: connectionId, recipient: userId, status: 'pending' },
+      { status: 'declined' },
+      { new: true }
+    );
+    if (!connection) return res.status(404).json({ error: "Pending connection not found" });
 
-    // Emit to both users
     const io = getIO();
     io.to(`sender-${connection.requester}`).emit('connectionDeclined', { connectionId });
     io.to(`receiver-${connection.recipient}`).emit('connectionDeclined', { connectionId });
@@ -101,6 +105,28 @@ export const getConnectionStatus = async (req, res, next) => {
     }
 
     res.json({ status });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const removeConnection = async (req, res, next) => {
+  try {
+    const { userId } = req;
+    const { id: connectionId } = req.params;
+    // Only remove if accepted and user is part of connection
+    const connection = await Connection.findOneAndDelete({
+      _id: connectionId,
+      status: 'accepted',
+      $or: [{ requester: userId }, { recipient: userId }]
+    });
+    if (!connection) return res.status(404).json({ error: "Accepted connection not found" });
+
+    const io = getIO();
+    io.to(`sender-${connection.requester}`).emit('connectionRemoved', { connectionId });
+    io.to(`receiver-${connection.recipient}`).emit('connectionRemoved', { connectionId });
+
+    res.json({ message: 'Connection removed', connectionId });
   } catch (err) {
     next(err);
   }

@@ -1,7 +1,7 @@
-import { setIO } from '../socket.js';
 import { handleJoinRooms } from './rooms.js';
 import { handleConnectionEvents } from './connection.js';
 import { handleMessageEvents } from './message.js';
+import { setIO } from './io.js';
 
 export default function(io) {
   setIO(io);
