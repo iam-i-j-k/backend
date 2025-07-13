@@ -10,10 +10,11 @@ export const registerService = async ({ username, email, password, skills, bio }
     throw new Error('Email already registered');
   }
 
+  const hashedPassword = await bcrypt.hash(password, 10);
   const user = new User({
     username,
     email,
-    password, // assume hashing middleware is in model
+    password: hashedPassword,
     skills,
     bio,
     isVerified: false,
