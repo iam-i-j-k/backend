@@ -4,7 +4,6 @@ export const register = async (req, res, next) => {
   try {
     const result = await registerService(req.body);
 
-    // Emit real-time event for new user registration
     const io = req.app.get('io');
     if (io && result.user) {
       io.emit('userRegistered', {
@@ -23,10 +22,21 @@ export const register = async (req, res, next) => {
 };
 
 export const login = async (req, res, next) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required' });
+  }
+
   try {
     const result = await loginService(req.body);
     res.status(200).json(result);
   } catch (err) {
+    if (err.message === 'Invalid credentials') {
+      return res.status(401).json({ error: 'Incorrect email or password.' });
+    }
+    if (err.message === 'Please verify your email before logging in.') {
+      return res.status(403).json({ error: 'Please verify your email before logging in.' });
+    }
     next(err);
   }
 };

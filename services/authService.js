@@ -62,19 +62,36 @@ export const verifyEmailService = async (token) => {
 
 
 export const loginService = async ({ email, password }) => {
-  const user = await User.findOne({ email });
-  console.log(await bcrypt.compare(password, user.password));
-  if (!user || !(await bcrypt.compare(password, user.password))) {
-    throw new Error('Invalid credentials');
+  try {
+    const user = await User.findOne({ email });
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      throw new Error('Invalid credentials');
+    }
+
+    if (!user.isVerified) {
+      throw new Error('Please verify your email before logging in.');
+    }
+
+    const token = jwt.sign(
+      { userId: user._id },
+      config.jwtSecret, 
+      { expiresIn: '24h' }
+    );
+
+    return {
+      token,
+      user: { 
+        _id: user._id, 
+        username: user.username, 
+        email: user.email, 
+        skills: user.skills, 
+        bio: user.bio, 
+        verified: user.isVerified 
+      }
+    };
+  } catch (error) {
+    throw error;
   }
-  if (!user.isVerified) {
-    throw new Error('Please verify your email before logging in.');
-  }
-  const token = jwt.sign({ userId: user._id }, config.jwtSecret, { expiresIn: '24h' });
-  return {
-    token,
-    user: { _id: user._id, username: user.username, email: user.email, skills: user.skills, bio: user.bio, verified: user.isVerified }
-  };
 };
 
 export const updateProfileService = async (userId, data) => {
