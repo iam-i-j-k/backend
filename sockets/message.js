@@ -56,5 +56,48 @@ export function handleMessageEvents(socket, io) {
     }
   });
 
+// Update message status handlers
+socket.on('markAsDelivered', async ({ messageId, userId }) => {
+  try {
+    const message = await Message.findByIdAndUpdate(
+      messageId,
+      { delivered: true, deliveredAt: new Date() },
+      { new: true }
+    ).lean();
+    
+    if (message) {
+      // Notify sender that their message was delivered
+      io.to(`user-${message.sender}`).emit('messageStatusUpdate', {
+        type: 'delivered',
+        messageId,
+        userId: message.recipient
+      });
+    }
+  } catch (err) {
+    console.error('Delivery update error:', err);
+  }
+});
+
+socket.on('markAsSeen', async ({ messageId, userId }) => {
+  try {
+    const message = await Message.findByIdAndUpdate(
+      messageId,
+      { seen: true, seenAt: new Date() },
+      { new: true }
+    ).lean();
+    
+    if (message) {
+      // Notify sender that their message was seen
+      io.to(`user-${message.sender}`).emit('messageStatusUpdate', {
+        type: 'seen',
+        messageId,
+        userId: message.recipient
+      });
+    }
+  } catch (err) {
+    console.error('Seen update error:', err);
+  }
+});
+
   // ... Add all other message-related events (typing, delivered, seen, clearChat, reactMessage) here ...
 }

@@ -156,4 +156,14 @@ export function handleConnectionEvents(socket, io) {
       socket.emit('error', { message: 'Failed to get connected users' });
     }
   });
+
+  socket.on('typing', ({to, from})=>{
+    io.to(`sender-${to}`).emit('typing', {from});
+    io.to(`receiver-${from}`).emit('typing', {to});
+  });
+
+  socket.on('stopTyping', ({to, from})=>{
+    io.to(`sender-${to}`).emit('stopTyping', {from});
+    io.to(`receiver-${from}`).emit('stopTyping', {to});
+  });
 }

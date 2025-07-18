@@ -68,6 +68,7 @@ export const declineConnectionRequest = async (req, res, next) => {
     io.to(`receiver-${connection.recipient}`).emit('connectionDeclined', { connectionId });
 
     res.json({ message: 'Connection declined', connectionId });
+    Connection.findOneAndDelete({ _id: connectionId, recipient: userId, status: 'declined' })
   } catch (err) {
     next(err);
   }
@@ -125,6 +126,9 @@ export const removeConnection = async (req, res, next) => {
     const io = getIO();
     io.to(`sender-${connection.requester}`).emit('connectionRemoved', { connectionId });
     io.to(`receiver-${connection.recipient}`).emit('connectionRemoved', { connectionId });
+
+    await User.findByIdAndUpdate(connection.requester, { $inc: { totalConnections: -1 } }, { new: true });
+    await User.findByIdAndUpdate(connection.recipient, { $inc: { totalConnections: -1 } }, { new: true });
 
     res.json({ message: 'Connection removed', connectionId });
   } catch (err) {

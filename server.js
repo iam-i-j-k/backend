@@ -10,7 +10,7 @@ import config from './config.js';
 import { Server } from 'socket.io';
 import http from 'http';
 import { errorHandler } from './middleware/errorHandler.js';
-import sockets from './sockets/index.js'; // We'll export handlers, not io instance
+import sockets from './sockets/index.js'; 
 
 dotenv.config();
 
