@@ -99,5 +99,30 @@ socket.on('markAsSeen', async ({ messageId, userId }) => {
   }
 });
 
+  socket.on('clearChat', async ({ userId, chatUserId }) => {
+    try {
+      // Delete messages between both users
+      await Message.deleteMany({
+        $or: [
+          { sender: userId, recipient: chatUserId },
+          { sender: chatUserId, recipient: userId }
+        ]
+      });
+
+      // Notify both users to clear their chat UI
+      io.to(`user-${userId}`).emit('chatCleared', {
+        chatUserId,
+        userId
+      });
+      io.to(`user-${chatUserId}`).emit('chatCleared', {
+        chatUserId: userId,
+        userId
+      });
+    } catch (err) {
+      console.error('Error clearing chat:', err);
+      socket.emit('error', { message: 'Failed to clear chat' });
+    }
+  });
+
   // ... Add all other message-related events (typing, delivered, seen, clearChat, reactMessage) here ...
 }

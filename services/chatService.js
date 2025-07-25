@@ -52,16 +52,12 @@ export const clearChat = async (req, res) => {
     });
 
     const io = getIO();
-    
-    // Fix: Use proper room naming and include both IDs
     io.to(`user-${userId}`).emit('chatCleared', { 
       chatUserId,
       clearedBy: userId 
     });
-    
-    // This is the critical fix for the other user
     io.to(`user-${chatUserId}`).emit('chatCleared', {
-      chatUserId: userId, // Reverse the IDs for the other user
+      chatUserId: userId,
       clearedBy: userId
     });
 
