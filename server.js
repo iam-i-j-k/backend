@@ -18,15 +18,16 @@ const app = express();
 const server = http.createServer(app);
 
 // Middlewares
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  'http://localhost:5173'
-];
+const allowedOrigins = [];
+if (process.env.NODE_ENV === 'production') {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}else{
+  allowedOrigins.push('http://localhost:5173');
+}
 
 app.use(cors({
   origin: [
-    ...allowedOrigins,
-    'http://localhost:5173'
+    ...allowedOrigins
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,

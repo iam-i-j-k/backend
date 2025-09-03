@@ -13,8 +13,8 @@ export function handleMessageEvents(socket, io) {
         ...rest,
         type: file ? "file" : "text"
       });
-      io.to(`sender-${recipient}`).emit('receiveMessage', message);
-      io.to(`receiver-${sender}`).emit('receiveMessage', message);
+      io.to(`sender-${recipient}~~~~${sender}`).emit('receiveMessage', message);//sending
+      io.to(`receiver-${sender}~~~~${recipient}`).emit('receiveMessage', message);//recie
       publishMessage(recipient, message, io);
     } catch (err) {
       console.error('Error saving/sending message:', err);
