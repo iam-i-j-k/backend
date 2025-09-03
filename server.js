@@ -9,7 +9,6 @@ import chatRoutes from './routes/chatRoutes.js';
 import config from './config.js';
 import { Server } from 'socket.io';
 import http from 'http';
-import { checkApiKey } from "./middleware/checkApiKey.js";
 import { errorHandler } from './middleware/errorHandler.js';
 import sockets from './sockets/index.js'; 
 
@@ -41,7 +40,7 @@ app.get('/', (req, res) => {
 })
 
 // API Routes
-app.use("/api/auth", checkApiKey, authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/connections', connectionRoutes);
 app.use('/api/chat', chatRoutes);
