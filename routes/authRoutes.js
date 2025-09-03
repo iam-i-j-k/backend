@@ -2,8 +2,8 @@ import express from 'express';
 import { register, login, updateProfile, verifyEmail, forgotPassword, resetPassword } from '../controllers/authController.js';
 import { validate } from '../utils/validate.js';
 import { registerSchema, loginSchema, profileUpdateSchema } from '../validators/user.js';
-import { auth } from '../middleware/auth.js';
 import { checkApiKey } from '../middleware/checkApiKey.js';
+import { auth } from '../middleware/auth.js';
 
 
 const router = express.Router();

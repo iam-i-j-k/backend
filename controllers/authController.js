@@ -23,22 +23,34 @@ export const register = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
   const { email, password } = req.body;
+
   if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required' });
+    return res.status(400).json({ error: "Email and password are required" });
   }
+
   try {
-    const result = await loginService(req.body);
-    res.status(200).json(result);
+    const result = await loginService({ email, password });
+
+    // set token cookie
+    res.cookie("token", result.token, {
+      httpOnly: true,        // prevent JS access
+      secure: true,          // only send over HTTPS
+      sameSite: "None",      // cross-site cookie
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    return res.status(200).json(result);
   } catch (err) {
-    if (err.message === 'Invalid credentials') {
-      return res.status(401).json({ error: 'Incorrect email or password.' });
+    if (err.message === "Invalid credentials") {
+      return res.status(401).json({ error: "Incorrect email or password." });
     }
-    if (err.message === 'Please verify your email before logging in.') {
-      return res.status(403).json({ error: 'Please verify your email before logging in.' });
+    if (err.message === "Please verify your email before logging in.") {
+      return res.status(403).json({ error: "Please verify your email before logging in." });
     }
     next(err);
   }
 };
+
 
 export const updateProfile = async (req, res, next) => {
   try {

@@ -39,17 +39,14 @@ app.get('/', (req, res) => {
   res.send('Welcome to the SkillSwap API');
 })
 
-// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/connections', connectionRoutes);
 app.use('/api/chat', chatRoutes);
 
-// Error Handler
 app.use(errorHandler);
 
 
-// Initialize Socket.IO with production configuration
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
@@ -65,17 +62,15 @@ const io = new Server(server, {
   cookie: false
 });
 
-// Pass io to socketHandlers to register all events
 sockets(io);
 
-// MongoDB Connection
 mongoose.connect(config.mongoUri)
   .then(() => {
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
     server.listen(config.port, () => {
-      console.log(`🚀 Server running on http://localhost:${config.port}`);
+      console.log(`Server running on http://localhost:${config.port}`);
     });
   })
   .catch((err) => {
-    console.error('❌ MongoDB connection error:', err);
+    console.error('MongoDB connection error:', err);
   });

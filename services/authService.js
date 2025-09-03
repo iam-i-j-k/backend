@@ -77,6 +77,7 @@ export const loginService = async ({ email, password }) => {
       config.jwtSecret, 
       { expiresIn: '24h' }
     );
+    
 
     return {
       token,
